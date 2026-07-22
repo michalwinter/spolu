@@ -122,8 +122,8 @@ async function onSubmit() {
     }
 
     emit('saved')
-  } catch {
-    errorMessage.value = 'Nepodařilo se uložit vzpomínku.'
+  } catch (error: any) {
+    errorMessage.value = error?.data?.message || 'Nepodařilo se uložit vzpomínku.'
   } finally {
     loading.value = false
     markSummaryChanged()

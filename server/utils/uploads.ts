@@ -1,6 +1,7 @@
-import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import { access, mkdir, unlink, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
-import { join, resolve } from 'node:path'
+import { isAbsolute, join, resolve } from 'node:path'
 import sharp from 'sharp'
 import exifr from 'exifr'
 
@@ -36,12 +37,22 @@ export function isAllowedImageType(mimeType: string | undefined): mimeType is st
 
 function getUploadsDir() {
   const config = useRuntimeConfig()
-  return resolve(process.cwd(), config.uploadsDir || '.data/uploads')
+  const configured = process.env.NUXT_UPLOADS_DIR || process.env.UPLOADS_DIR || config.uploadsDir || '.data/uploads'
+  return isAbsolute(configured) ? configured : resolve(process.cwd(), configured)
 }
 
 async function ensureUploadsDir() {
   const dir = getUploadsDir()
-  await mkdir(dir, { recursive: true })
+  try {
+    await mkdir(dir, { recursive: true })
+    await access(dir, constants.R_OK | constants.W_OK)
+  } catch (error) {
+    console.error(`[uploads] Upload adresář není dostupný pro zápis: ${dir}`, error)
+    throw createError({
+      statusCode: 500,
+      message: `Upload adresář není zapisovatelný: ${dir}. Zkontroluj práva a vlastníka složky.`
+    })
+  }
   return dir
 }
 
@@ -60,48 +71,53 @@ export async function saveUploadedPhoto(part: { filename?: string, type?: string
     throw createError({ statusCode: 400, message: 'Fotka je příliš velká (max 20 MB).' })
   }
 
-  let gpsData: { latitude: number, longitude: number } | undefined
   try {
-    gpsData = await exifr.gps(part.data)
+    let gpsData: { latitude: number, longitude: number } | undefined
+    try {
+      gpsData = await exifr.gps(part.data)
+    } catch (error) {
+      console.warn(`[uploads] GPS data nenalezena pro fotku ${part.filename}`)
+    }
+
+    const dir = await ensureUploadsDir()
+    const id = randomUUID()
+
+    const image = sharp(part.data, { failOn: 'none' }).rotate()
+
+    const fullBuffer = await image
+      .clone()
+      .resize({ width: FULL_MAX_DIMENSION, height: FULL_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer()
+
+    const thumbnailBuffer = await image
+      .clone()
+      .resize({ width: THUMBNAIL_MAX_DIMENSION, height: THUMBNAIL_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 70 })
+      .toBuffer()
+
+    const { width, height } = await sharp(fullBuffer).metadata()
+
+    const filename = `${id}.jpg`
+    const thumbnailFilename = `${id}-thumb.jpg`
+
+    await writeFile(join(dir, filename), fullBuffer)
+    await writeFile(join(dir, thumbnailFilename), thumbnailBuffer)
+
+    return {
+      filename,
+      thumbnailFilename,
+      originalName: part.filename,
+      mimeType: 'image/jpeg',
+      size: fullBuffer.length,
+      width,
+      height,
+      lat: gpsData?.latitude,
+      lng: gpsData?.longitude
+    }
   } catch (error) {
-    console.warn(`[uploads] GPS data nenalezena pro fotku ${part.filename}`)
-  }
-
-  const dir = await ensureUploadsDir()
-  const id = randomUUID()
-
-  const image = sharp(part.data, { failOn: 'none' }).rotate()
-
-  const fullBuffer = await image
-    .clone()
-    .resize({ width: FULL_MAX_DIMENSION, height: FULL_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 80 })
-    .toBuffer()
-
-  const thumbnailBuffer = await image
-    .clone()
-    .resize({ width: THUMBNAIL_MAX_DIMENSION, height: THUMBNAIL_MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
-    .jpeg({ quality: 70 })
-    .toBuffer()
-
-  const { width, height } = await sharp(fullBuffer).metadata()
-
-  const filename = `${id}.jpg`
-  const thumbnailFilename = `${id}-thumb.jpg`
-
-  await writeFile(join(dir, filename), fullBuffer)
-  await writeFile(join(dir, thumbnailFilename), thumbnailBuffer)
-
-  return {
-    filename,
-    thumbnailFilename,
-    originalName: part.filename,
-    mimeType: 'image/jpeg',
-    size: fullBuffer.length,
-    width,
-    height,
-    lat: gpsData?.latitude,
-    lng: gpsData?.longitude
+    console.error(`[uploads] Nepodařilo se zpracovat/uložit fotku ${part.filename}:`, error)
+    throw createError({ statusCode: 500, message: 'Nepodařilo se zpracovat nebo uložit fotku.' })
   }
 }
 
