@@ -27,72 +27,91 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Neplatné ID vzpomínky.' })
   }
 
-  const memory = await Memory.findById(id)
-  if (!memory) {
-    throw createError({ statusCode: 404, message: 'Vzpomínka nenalezena.' })
-  }
+  let fileParts: Array<{ filename?: string, type?: string, data: Buffer }> = []
 
-  const parts = await readMultipartFormData(event)
-  if (!parts) {
-    throw createError({ statusCode: 400, message: 'Chybí data formuláře.' })
-  }
-
-  const fields: Record<string, string> = {}
-  const fileParts: Array<{ filename?: string, type?: string, data: Buffer }> = []
-
-  for (const part of parts) {
-    if (part.filename) {
-      fileParts.push(part)
-    } else if (part.name) {
-      fields[part.name] = part.data.toString('utf-8')
+  try {
+    const memory = await Memory.findById(id)
+    if (!memory) {
+      throw createError({ statusCode: 404, message: 'Vzpomínka nenalezena.' })
     }
-  }
 
-  const parsedFields = fieldsSchema.safeParse(fields)
-  if (!parsedFields.success) {
-    throw createError({ statusCode: 400, message: 'Vyplň prosím datum a text vzpomínky.' })
-  }
+    const parts = await readMultipartFormData(event)
+    if (!parts) {
+      throw createError({ statusCode: 400, message: 'Chybí data formuláře.' })
+    }
 
-  if (fileParts.length > MAX_PHOTOS_PER_MEMORY) {
-    throw createError({ statusCode: 400, message: `Najednou lze nahrát maximálně ${MAX_PHOTOS_PER_MEMORY} fotek.` })
-  }
+    const fields: Record<string, string> = {}
+    fileParts = []
 
-  let removeIds: string[] = []
-  if (parsedFields.data.removePhotoIds) {
-    try {
-      const decoded = JSON.parse(parsedFields.data.removePhotoIds)
-      if (Array.isArray(decoded)) {
-        removeIds = decoded.filter((value): value is string => typeof value === 'string')
+    for (const part of parts) {
+      if (part.filename) {
+        fileParts.push(part)
+      } else if (part.name) {
+        fields[part.name] = part.data.toString('utf-8')
       }
-    } catch {
-      throw createError({ statusCode: 400, message: 'Neplatný seznam fotek ke smazání.' })
     }
+
+    const parsedFields = fieldsSchema.safeParse(fields)
+    if (!parsedFields.success) {
+      throw createError({ statusCode: 400, message: 'Vyplň prosím datum a text vzpomínky.' })
+    }
+
+    if (fileParts.length > MAX_PHOTOS_PER_MEMORY) {
+      throw createError({ statusCode: 400, message: `Najednou lze nahrát maximálně ${MAX_PHOTOS_PER_MEMORY} fotek.` })
+    }
+
+    let removeIds: string[] = []
+    if (parsedFields.data.removePhotoIds) {
+      try {
+        const decoded = JSON.parse(parsedFields.data.removePhotoIds)
+        if (Array.isArray(decoded)) {
+          removeIds = decoded.filter((value): value is string => typeof value === 'string')
+        }
+      } catch {
+        throw createError({ statusCode: 400, message: 'Neplatný seznam fotek ke smazání.' })
+      }
+    }
+
+    const existingPhotos = memory.photos as unknown as PhotoSubdoc[]
+    const photosToRemove = existingPhotos.filter(photo => removeIds.includes(photo._id.toString()))
+    const remainingPhotos = existingPhotos.filter(photo => !removeIds.includes(photo._id.toString()))
+
+    const newPhotos = []
+    for (const part of fileParts) {
+      newPhotos.push(await saveUploadedPhoto(part))
+    }
+
+    memory.set({
+      date: new Date(parsedFields.data.date),
+      text: parsedFields.data.text,
+      location: parsedFields.data.location || undefined,
+      lat: parsedFields.data.lat,
+      lng: parsedFields.data.lng,
+      photos: [...remainingPhotos, ...newPhotos]
+    })
+    await memory.save()
+
+    if (photosToRemove.length) {
+      await deletePhotoFiles(photosToRemove.flatMap(photo => [photo.filename, photo.thumbnailFilename]))
+    }
+
+    const populated = await Memory.findById(memory._id).populate('authorId', 'name username').lean()
+
+    return serializeMemory(populated!)
+  } catch (error: any) {
+    console.error('[memories:update] Nepodařilo se uložit vzpomínku', {
+      memoryId: id,
+      files: fileParts.map(file => ({
+        filename: file.filename,
+        type: file.type,
+        size: file.data.length
+      }))
+    }, error)
+
+    if (typeof error?.statusCode === 'number') {
+      throw error
+    }
+
+    throw createError({ statusCode: 500, message: 'Nepodařilo se uložit vzpomínku.' })
   }
-
-  const existingPhotos = memory.photos as unknown as PhotoSubdoc[]
-  const photosToRemove = existingPhotos.filter(photo => removeIds.includes(photo._id.toString()))
-  const remainingPhotos = existingPhotos.filter(photo => !removeIds.includes(photo._id.toString()))
-
-  const newPhotos = []
-  for (const part of fileParts) {
-    newPhotos.push(await saveUploadedPhoto(part))
-  }
-
-  memory.set({
-    date: new Date(parsedFields.data.date),
-    text: parsedFields.data.text,
-    location: parsedFields.data.location || undefined,
-    lat: parsedFields.data.lat,
-    lng: parsedFields.data.lng,
-    photos: [...remainingPhotos, ...newPhotos]
-  })
-  await memory.save()
-
-  if (photosToRemove.length) {
-    await deletePhotoFiles(photosToRemove.flatMap(photo => [photo.filename, photo.thumbnailFilename]))
-  }
-
-  const populated = await Memory.findById(memory._id).populate('authorId', 'name username').lean()
-
-  return serializeMemory(populated!)
 })

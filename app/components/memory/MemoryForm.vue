@@ -37,6 +37,16 @@ const removedPhotoIds = ref<string[]>([])
 const loading = ref(false)
 const errorMessage = ref('')
 
+function getErrorMessage(error: unknown): string | null {
+  const candidate = error as any
+
+  return candidate?.data?.message
+    || candidate?.response?._data?.message
+    || candidate?.statusMessage
+    || candidate?.message
+    || null
+}
+
 function resetForm() {
   if (report.value && props.memoryId) {
     const memory = report.value.memories.find(m => m.id === props.memoryId)
@@ -122,8 +132,9 @@ async function onSubmit() {
     }
 
     emit('saved')
-  } catch (error: any) {
-    errorMessage.value = error?.data?.message || 'Nepodařilo se uložit vzpomínku.'
+  } catch (error) {
+    console.error('[memory-form] Nepodařilo se uložit vzpomínku', error)
+    errorMessage.value = getErrorMessage(error) || 'Nepodařilo se uložit vzpomínku.'
   } finally {
     loading.value = false
     markSummaryChanged()
