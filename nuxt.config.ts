@@ -18,7 +18,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     uploadsDir: '.data/uploads',
     public: {
-      mapyApiKey: ''
+      mapyApiKey: '',
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || process.env.npm_package_version || 'dev',
+      appBuild: process.env.NUXT_PUBLIC_APP_BUILD || ''
     },
     mongoose: {
       uri: 'mongodb://127.0.0.1:27017/spolu'

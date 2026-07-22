@@ -7,6 +7,8 @@ definePageMeta({
 })
 
 const { fetch: fetchUserSession } = useUserSession()
+const { public: { appVersion, appBuild } } = useRuntimeConfig()
+const versionLabel = computed(() => appBuild ? `v${appVersion} (${appBuild})` : `v${appVersion}`)
 
 const schema = z.object({
   username: z.string().min(1, 'Zadej uživatelské jméno'),
@@ -48,9 +50,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-heart" class="text-primary size-6" />
-          <h1 class="text-lg font-semibold">
-            Spolu
-          </h1>
+          <div class="leading-tight">
+            <h1 class="text-lg font-semibold">Spolu</h1>
+            <p class="text-xs text-toned">{{ versionLabel }}</p>
+          </div>
         </div>
       </template>
 

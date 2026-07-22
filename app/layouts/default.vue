@@ -5,6 +5,8 @@ import type { CalendarDate } from '@internationalized/date'
 
 const { user, clear } = useUserSession()
 const isSettingsOpen = ref(false)
+const { public: { appVersion, appBuild } } = useRuntimeConfig()
+const versionLabel = computed(() => appBuild ? `v${appVersion} (${appBuild})` : `v${appVersion}`)
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobile = breakpoints.smaller('sm')
@@ -25,7 +27,10 @@ watch(selectedDate, (newVal) => {
       <UContainer class="flex items-center justify-between py-3.75">
         <div class="flex items-center gap-2">
           <UIcon name="ph:heart-duotone" class="text-primary size-6" />
-          <span class="font-semibold text-lg">Spolu</span>
+          <div class="leading-tight">
+            <span class="font-semibold text-lg block">Spolu</span>
+            <span class="text-xs text-toned">{{ versionLabel }}</span>
+          </div>
         </div>
 
         <div v-if="user" class="flex items-center gap-2.5">
