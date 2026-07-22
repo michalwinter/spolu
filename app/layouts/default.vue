@@ -22,10 +22,10 @@ watch(selectedDate, (newVal) => {
 </script>
 
 <template>
-  <div class="h-full bg-default scrollbar-none">
+  <div class="relative h-full bg-default scrollbar-none">
     <header class="sticky top-0 z-10 bg-default border-b border-muted">
       <UContainer class="flex items-center justify-between py-3.75">
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2">
           <UIcon name="ph:heart-duotone" class="text-primary size-6" />
           <span class="font-semibold text-lg block">Spolu</span>
         </div>

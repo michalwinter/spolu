@@ -186,6 +186,9 @@ export function useMemories() {
     if (typeof payload.lat === 'number' && typeof payload.lng === 'number') {
       formData.set('lat', String(payload.lat))
       formData.set('lng', String(payload.lng))
+    } else {
+      formData.set('lat', '')
+      formData.set('lng', '')
     }
 
     if (payload.removePhotoIds?.length) {

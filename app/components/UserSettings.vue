@@ -2,6 +2,9 @@
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 const { clear } = useUserSession();
 
+const { public: { appVersion } } = useRuntimeConfig()
+const versionLabel = computed(() => `v${appVersion}`)
+
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobile = breakpoints.smaller('sm')
 
@@ -31,6 +34,10 @@ async function logout() {
         <UButton block icon="ph:password" label="Změnit heslo" variant="soft" color="neutral" @click="() => { isPasswordChangeOpen = true }"/>
         <UButton block icon="ph:sign-out" label="Odhlásit se" variant="soft" @click="logout()" />
       </div>
+    </div>
+    <div>
+      <h3 class="text-xs font-semibold text-toned">O aplikaci</h3>
+      <p class="text-xs text-toned">Verze: {{ versionLabel }}</p>
     </div>
   </div>
 

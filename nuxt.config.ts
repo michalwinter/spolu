@@ -1,4 +1,5 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import pkg from './package.json'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -19,8 +20,7 @@ export default defineNuxtConfig({
     uploadsDir: '.data/uploads',
     public: {
       mapyApiKey: '',
-      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || process.env.npm_package_version || 'dev',
-      appBuild: process.env.NUXT_PUBLIC_APP_BUILD || ''
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || pkg.version || 'dev',
     },
     mongoose: {
       uri: 'mongodb://127.0.0.1:27017/spolu'

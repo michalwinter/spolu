@@ -73,8 +73,8 @@ export default defineEventHandler(async (event) => {
       time: parsedFields.data.time || undefined,
       text: parsedFields.data.text,
       location: parsedFields.data.location || undefined,
-      lat: parsedFields.data.lat ?? photoWithGps?.lat,
-      lng: parsedFields.data.lng ?? photoWithGps?.lng,
+      lat: parsedFields.data.lat ?? photoWithGps?.lat ?? undefined,
+      lng: parsedFields.data.lng ?? photoWithGps?.lng ?? undefined,
       photos,
       authorId: session.user.id,
       tags: tags.length ? tags : undefined
