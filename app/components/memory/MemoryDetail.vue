@@ -72,7 +72,10 @@ const mapLink = computed(() => {
 	if (!memory || typeof memory.lat !== 'number' || typeof memory.lng !== 'number') {
 		return null
 	}
-	return `https://mapy.com/fnc/v1/showmap?mapset=basic&center=${memory.lng},${memory.lat}&zoom=16&marker=true`
+	
+	if (isMobile.value) return `geo:${memory.lat},${memory.lng}`
+	else return `https://mapy.com/fnc/v1/showmap?mapset=basic&center=${memory.lng},${memory.lat}&zoom=16&marker=true`
+
 })
 
 function goPrev() {
@@ -192,18 +195,15 @@ activeIndex.value = resolveInitialIndex()
 			@touchstart="onTouchStart"
 			@touchend="onTouchEnd"
 		>
-			<div class="flex items-start justify-between gap-2">
-				<div class="flex items-center gap-2.5">
+			<div class="flex items-start gap-2">
+				<div class="mr-auto flex items-center gap-2.5">
 					<UAvatar size="lg" :text="initials"/>
 					<div class="flex items-center gap-2.5 text-sm font-semibold">
 						<span v-if="activeMemory.author">{{ activeMemory.author.name }}</span>
-						<!-- <span v-if="activeMemory.time">{{ activeMemory.time }}</span> -->
 					</div>
 				</div>
-				<div class="text-sm">
-					
-				</div>
 
+				<UButton v-if="mapLink" icon="ph:map-trifold" variant="soft" :to="mapLink" target="_top" />
 				<div v-if="!isMobile" class="flex items-center gap-1.5">
 					<UButton
 						icon="ph:caret-left"
@@ -232,7 +232,9 @@ activeIndex.value = resolveInitialIndex()
 			
 			<div class="flex items-center gap-2.5">
 				<UBadge v-if="activeMemory.time" variant="soft" color="neutral" :label="activeMemory.time" class="rounded-lg" />
-				<UBadge v-if="activeMemory.location" icon="ph:map-pin" variant="soft" :label="activeMemory.location" class="rounded-lg" />
+				<UBadge v-if="activeMemory.location" icon="ph:map-pin" variant="soft" class="rounded-lg"
+					:label="activeMemory.location" 
+				/>
 			</div>
 
 			<p class="text-sm whitespace-pre-line">{{ activeMemory.text }}</p>
