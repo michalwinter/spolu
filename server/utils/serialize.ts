@@ -26,7 +26,7 @@ interface LeanDailyMemory {
 }
 
 // 2. Nový interface pro hlavní dokument celého dne
-interface LeanDailyReport {
+export interface LeanDailyReport {
   _id: { toString(): string }
   date: Date
   title?: string

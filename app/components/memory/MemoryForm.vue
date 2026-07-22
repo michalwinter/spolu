@@ -40,6 +40,11 @@ const errorMessage = ref('')
 function getErrorMessage(error: unknown): string | null {
   const candidate = error as any
 
+  const statusCode = candidate?.statusCode || candidate?.response?.status
+  if (statusCode === 413) {
+    return 'Soubor je příliš velký pro aktuální limit serveru (HTTP 413). Zvyšte upload limit v reverse proxy (např. nginx client_max_body_size).'
+  }
+
   return candidate?.data?.message
     || candidate?.response?._data?.message
     || candidate?.statusMessage

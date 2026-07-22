@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LeanDailyReport } from '~~/server/utils/serialize'
 
 const fieldsSchema = z.object({
   date: z.iso.datetime(),
@@ -85,7 +86,7 @@ export default defineEventHandler(async (event) => {
       { returnDocument: 'after', upsert: true }
     ).populate('memories.authorId', 'name username').lean()
 
-    return serializeDailyReport(report!)
+    return serializeDailyReport(report as unknown as LeanDailyReport)
   } catch (error: any) {
     console.error('[memories:create] Nepodařilo se uložit vzpomínku', {
       userId: session.user.id,

@@ -50,7 +50,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-heart" class="text-primary size-6" />
-          <div class="leading-tight">
+          <div class="flex items-baseline gap-1">
             <h1 class="text-lg font-semibold">Spolu</h1>
             <p class="text-xs text-toned">{{ versionLabel }}</p>
           </div>

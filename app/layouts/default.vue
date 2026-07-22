@@ -25,12 +25,9 @@ watch(selectedDate, (newVal) => {
   <div class="h-full bg-default scrollbar-none">
     <header class="sticky top-0 z-10 bg-default border-b border-muted">
       <UContainer class="flex items-center justify-between py-3.75">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2.5">
           <UIcon name="ph:heart-duotone" class="text-primary size-6" />
-          <div class="leading-tight">
-            <span class="font-semibold text-lg block">Spolu</span>
-            <span class="text-xs text-toned">{{ versionLabel }}</span>
-          </div>
+          <span class="font-semibold text-lg block">Spolu</span>
         </div>
 
         <div v-if="user" class="flex items-center gap-2.5">
