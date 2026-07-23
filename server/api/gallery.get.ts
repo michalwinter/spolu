@@ -4,13 +4,26 @@ export default defineEventHandler(async (event) => {
   try {
     const gallery = await DailyReport.aggregate([
       // 1. Rozdělí dokumenty podle vzpomínek (co vzpomínka, to dokument)
-      { $unwind: '$memories' },
+      { $unwind: {
+        path: '$memories',
+        includeArrayIndex: 'memoryIndex',
+      }},
 
       // 2. Rozdělí dokumenty podle fotek (co fotka, to dokument)
-      { $unwind: '$memories.photos' },
+      { $unwind: {
+        path: '$memories.photos',
+        includeArrayIndex: 'photoIndex',
+      }},
 
       // 3. Seřadí výsledky od nejnovějších dat
-      { $sort: { date: -1 } },
+      { 
+        $sort: { 
+          date: -1,
+          'memories.time': -1,
+          memoryIndex: -1,
+          photoIndex: -1
+        }
+      },
 
       {
         $lookup: {

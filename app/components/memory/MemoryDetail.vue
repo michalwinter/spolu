@@ -90,6 +90,11 @@ function goNext() {
 	}
 }
 
+defineShortcuts({
+	arrowright: goNext,
+	arrowleft: goPrev,
+})
+
 function selectPage(index: number) {
 	activeIndex.value = index
 }

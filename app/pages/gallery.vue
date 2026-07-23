@@ -2,7 +2,7 @@
 import type { GalleryPhoto } from '~~/shared/types';
 
 definePageMeta({
-  layout: false,
+  layout: 'blank',
 })
 
 const { data: photos, pending, error } = await useFetch<GalleryPhoto[]>('/api/gallery')
@@ -24,7 +24,7 @@ const activePhotoIndex = ref<number | null>(null)
     <header class="sticky top-0 z-10 border-b border-muted bg-default">
       <UContainer class="flex items-center justify-between py-3.75">
         <h1 class="text-lg font-semibold">Galerie</h1>
-        <UButton icon="ph:arrow-u-up-left" label="Zpět" variant="soft" color="neutral" to="/" />
+        <UButton icon="ph:arrow-u-up-left" label="Zpět" variant="ghost" color="neutral" to="/" />
       </UContainer>
     </header>
     <main class="py-4">

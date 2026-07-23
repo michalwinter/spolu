@@ -156,7 +156,7 @@ onMounted(async () => {
               :label="day.number.toString()"
               :autofocus="isToday(day.date)"
             /> -->
-            <button v-if="day.isValid" @click="selectDate(day.date)"
+            <!-- <button v-if="day.isValid" @click="selectDate(day.date)"
               :class="[ 'relative',
                 'aspect-square rounded-lg flex items-center justify-center transition-colors text-default',
                 isSelected(day.date) ? 'bg-primary text-inverted' : 
@@ -164,6 +164,13 @@ onMounted(async () => {
                     (hasMemory(day.date) ? ' bg-primary/10' : ''))
                   : (hasMemory(day.date) ? 'border-2 border-dashed border-primary/25 text-primary bg-primary/10 hover:bg-primary/20' : 'hover:bg-elevated')
                   ),
+              ]"
+            > -->
+            <button v-if="day.isValid" @click="selectDate(day.date)"
+              :class="[ 'relative',
+                'aspect-square rounded-lg flex items-center justify-center transition-colors text-default',
+                isSelected(day.date) ? 'bg-primary text-inverted' : 
+                  hasMemory(day.date) ? 'border-2 border-dashed border-primary/25 text-primary bg-primary/10 hover:bg-primary/20' : 'hover:bg-elevated'
               ]"
             >
               <span class="z-30 text-sm">{{ day.number }}</span>

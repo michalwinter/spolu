@@ -21,6 +21,17 @@ export default defineNuxtConfig({
     rootAttrs: {
       'data-vaul-drawer-wrapper': '',
     },
+    layoutTransition: {
+      name: 'layout',
+      mode: 'out-in',
+      // Matched to Nuxt UI defaults
+      enterActiveClass: 'transition-opacity duration-200 ease-out',
+      enterFromClass: 'opacity-0',
+      enterToClass: 'opacity-100',
+      leaveActiveClass: 'transition-opacity duration-150 ease-in',
+      leaveFromClass: 'opacity-100',
+      leaveToClass: 'opacity-0'
+    }
   },
   runtimeConfig: {
     uploadsDir: '.data/uploads',
