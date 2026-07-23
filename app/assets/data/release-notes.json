@@ -1,0 +1,15 @@
+[
+  {
+    "version": "1.1.1",
+    "releasedAt": "2026-07-23T15:00:00+02:00",
+    "title": "Swajpování fotografií a přechodová animace",
+    "features": [
+      "Nová možnost přejíždět mezi fotografiemi v prohlížeči fotografií pomocí dotykových gest.",
+      "Přidaná přechodová animace při otevírání galerie"
+    ],
+    "fixes": [
+      "Opraveno chybné pořadí fotografií",
+      "Opraveny drobné vizuální chyby"
+    ]
+  }
+]
