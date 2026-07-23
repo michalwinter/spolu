@@ -18,7 +18,7 @@ const isMobile = breakpoints.smaller('sm')
 
 const lastSeenVersion = useLocalStorage('spolu:last-seen-version', '')
 
-const isOpen = ref(true)
+const isOpen = ref(false)
 
 const activeNote = computed(() => notes.find(note => note.version === appVersion) ?? null)
 
@@ -55,7 +55,7 @@ function openIfNeeded() {
 
 watch(isOpen, (open) => {
   if (!open) {
-    //markAsSeen()
+    markAsSeen()
   }
 })
 
