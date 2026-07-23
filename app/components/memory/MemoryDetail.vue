@@ -259,6 +259,7 @@ activeIndex.value = resolveInitialIndex()
 		<div v-else class="rounded-xl border border-default p-6 text-center text-sm text-muted">
 			Žádné vzpomínky k zobrazení.
 		</div>
+		
 		<MemoryPhotoLightbox v-if="activeMemory" v-model="activePhotoIndex" :photos="activeMemory.photos" />
 
 		<ModalsMemoryForm v-if="report && report.memories[activeIndex]" v-model="isEditing" :report-id="report.id" :memory-id="report.memories[activeIndex]!.id"  />

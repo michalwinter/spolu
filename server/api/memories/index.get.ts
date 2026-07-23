@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       .lean()
 
     return {
-      items: reports.map(serializeDailyReport),
+      items: reports.map(r => serializeDailyReport(r as any)),
       hasMore: false
     }
   }
@@ -44,13 +44,14 @@ export default defineEventHandler(async (event) => {
     .sort({ date: -1 }) // Nejnovější dny jako první (např. Dnešek -> Včerejšek)
     .limit(limit + 1)
     .populate('memories.authorId', 'name username') // ZMĚNA: zanořený populate
+    .populate('memories.photos.authorId', 'name username') // ZMĚNA: zanořený populate pro autora fotek
     .lean()
 
   const hasMore = page.length > limit
   const items = page.slice(0, limit)
 
   return {
-    items: items.map(serializeDailyReport),
+    items: items.map(r => serializeDailyReport(r as any)),
     hasMore
   }
 })

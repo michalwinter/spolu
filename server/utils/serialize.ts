@@ -4,6 +4,7 @@ interface LeanPhoto {
   thumbnailFilename: string
   width?: number
   height?: number
+  authorId: LeanAuthor | { toString(): string } | null
 }
 
 interface LeanAuthor {
@@ -53,6 +54,11 @@ export interface SerializedDailyReport {
       thumbnailFilename: string
       width?: number
       height?: number
+      author: {
+        id: string
+        name: string
+        username: string
+      } | null
     }[]
     author: {
       id: string
@@ -94,13 +100,20 @@ export function serializeDailyReport(doc: LeanDailyReport): SerializedDailyRepor
         lat: typeof memory.lat === 'number' ? memory.lat : undefined,
         lng: typeof memory.lng === 'number' ? memory.lng : undefined,
         tags: memory.tags || [],
-        photos: (memory.photos || []).map(photo => ({
-          id: photo._id.toString(),
-          filename: photo.filename,
-          thumbnailFilename: photo.thumbnailFilename,
-          width: photo.width,
-          height: photo.height
-        })),
+        photos: (memory.photos || []).map(photo => {
+          const photoAuthor = (photo as any).authorId as LeanAuthor | null
+          const isPopulatedPhotoAuthor = !!photoAuthor && typeof photoAuthor === 'object' && 'name' in photoAuthor
+          return {
+            id: photo._id.toString(),
+            filename: photo.filename,
+            thumbnailFilename: photo.thumbnailFilename,
+            width: photo.width,
+            height: photo.height,
+            author: isPopulatedPhotoAuthor
+              ? { id: photoAuthor!._id.toString(), name: photoAuthor!.name, username: photoAuthor!.username }
+              : null
+          }
+        }),
         author: isPopulatedAuthor
           ? { id: author!._id.toString(), name: author!.name, username: author!.username }
           : null

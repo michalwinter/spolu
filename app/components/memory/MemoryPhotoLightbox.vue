@@ -1,6 +1,8 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends { filename: string, author: SerializedAuthor }">
+import type { SerializedAuthor } from '~~/shared/types'
+
 const props = defineProps<{
-  photos: MemoryPhoto[]
+  photos: T[]
   modelValue: number | null
 }>()
 
@@ -92,11 +94,26 @@ onBeforeUnmount(() => {
             aria-label="Další fotka"
             @click="go(1)"
           />
+        </template>
 
-          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/40 px-2 py-1 rounded-md">
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
+          <div 
+            v-if="currentPhoto?.author" 
+            class="flex items-center gap-1.5 p-1.5 pr-3 rounded-lg bg-black/40"
+          >
+            <UAvatar 
+              class="dark"
+              :alt="currentPhoto.author.name" 
+              size="sm"
+            />
+            <span class="text-sm font-medium text-white">
+              {{ currentPhoto.author.name }}
+            </span>
+          </div>
+          <div v-if="photos.length > 1" class="text-white text-sm bg-black/40 px-2 py-1 rounded-md">
             {{ (modelValue ?? 0) + 1 }} / {{ photos.length }}
           </div>
-        </template>
+        </div>
       </div>
     </template>
   </UModal>

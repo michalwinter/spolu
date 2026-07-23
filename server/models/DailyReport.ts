@@ -9,6 +9,7 @@ export interface MemoryPhotoDocument {
   size: number
   width?: number
   height?: number
+  authorId: Schema.Types.ObjectId
 }
 
 export interface DailyMemoryDocument {
@@ -65,7 +66,12 @@ export const DailyReport = defineMongooseModel<DailyReportDocument>({
             mimeType: { type: String, required: true },
             size: { type: Number, required: true },
             width: { type: Number },
-            height: { type: Number }
+            height: { type: Number },
+            authorId: {
+              type: Schema.Types.ObjectId,
+              ref: 'User',
+              required: true
+            }
           }
         ],
         authorId: {

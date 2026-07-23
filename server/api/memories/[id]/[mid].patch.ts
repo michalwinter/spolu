@@ -25,7 +25,7 @@ function normalizeReportDate(value: Date) {
 }
 
 export default defineEventHandler(async (event) => {
-	await requireUserSession(event)
+	const session = await requireUserSession(event)
 
 	const reportId = getRouterParam(event, 'id')
 	const memoryId = getRouterParam(event, 'mid')
@@ -106,9 +106,9 @@ export default defineEventHandler(async (event) => {
 	const photosToRemove = existingPhotos.filter(photo => removeIds.includes(photo._id.toString()))
 	const remainingPhotos = existingPhotos.filter(photo => !removeIds.includes(photo._id.toString()))
 
-	const newPhotos = []
+	let newPhotos = []
 	for (const part of fileParts) {
-		newPhotos.push(await saveUploadedPhoto(part))
+		newPhotos.push({ ...(await saveUploadedPhoto(part)), authorId: session.user.id })
 	}
 
 	if (remainingPhotos.length + newPhotos.length > MAX_PHOTOS_PER_MEMORY) {

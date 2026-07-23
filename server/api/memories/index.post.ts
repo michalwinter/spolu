@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
     const photos = []
     for (const part of fileParts) {
-      photos.push(await saveUploadedPhoto(part))
+      photos.push({ ...(await saveUploadedPhoto(part)), authorId: session.user.id })
     }
 
     const photoWithGps = photos.find(p => p.lat !== undefined && p.lng !== undefined)

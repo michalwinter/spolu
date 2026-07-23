@@ -64,7 +64,7 @@ watch(selectedDate, (newVal) => {
             </template>
           </UModal>
           
-          <!-- <SidePanel /> -->
+          <SidePanel />
         </div>
       </UContainer>
     </header>
