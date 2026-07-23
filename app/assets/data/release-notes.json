@@ -1,6 +1,6 @@
 [
   {
-    "version": "1.1.1",
+    "version": "1.1.2",
     "releasedAt": "2026-07-23T15:00:00+02:00",
     "title": "Swajpování fotografií a přechodová animace",
     "features": [
@@ -9,7 +9,8 @@
     ],
     "fixes": [
       "Opraveno chybné pořadí fotografií",
-      "Opraveny drobné vizuální chyby"
+      "Opraveny drobné vizuální chyby",
+      "Opraveno zobrazení fotografií v prohlížeči fotografií"
     ]
   }
 ]

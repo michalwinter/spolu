@@ -55,7 +55,7 @@ const slidePhotos = computed(() => {
 })
 
 const trackStyle = computed(() => ({
-  transform: `translateX(calc(-100% + ${dragOffsetX.value}px))`
+  transform: `translateX(calc(${slidePhotos.value.length > 1 ? '-100%' : '0%'} + ${dragOffsetX.value}px))`
 }))
 
 function go(delta: number) {
@@ -79,17 +79,6 @@ function animateGo(delta: number) {
   dragStartX.value = null
   dragStartY.value = null
   dragOffsetX.value = -(window.innerWidth || 1) * direction
-}
-
-function onKeydown(event: KeyboardEvent) {
-  if (props.modelValue === null) {
-    return
-  }
-  if (event.key === 'ArrowRight') {
-    go(1)
-  } else if (event.key === 'ArrowLeft') {
-    go(-1)
-  }
 }
 
 function beginDrag(startX: number, startY: number) {
@@ -189,14 +178,6 @@ function onTrackTransitionEnd() {
   isTransitioning.value = false
   dragOffsetX.value = 0
 }
-
-onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
-})
 </script>
 
 <template>
@@ -224,15 +205,15 @@ onBeforeUnmount(() => {
           @pointercancel="onPointerCancel"
         >
           <div
-            v-if="currentPhoto"
+            v-if="currentPhoto != null"
             class="absolute inset-0 flex h-full w-full"
             :class="{ 'transition-transform duration-300 ease-out': isTransitioning && !isDragging }"
             :style="trackStyle"
             @transitionend="onTrackTransitionEnd"
           >
             <div
-              v-for="slidePhoto in slidePhotos"
-              :key="slidePhoto.filename"
+              v-for="(slidePhoto, slideIndex) in slidePhotos"
+              :key="`${slidePhoto.filename}-${slideIndex}`"
               class="h-full w-full shrink-0 flex items-center justify-center"
             >
               <img
