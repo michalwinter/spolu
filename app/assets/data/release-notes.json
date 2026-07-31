@@ -12,5 +12,17 @@
       "Opraveny drobné vizuální chyby",
       "Opraveno zobrazení fotografií v prohlížeči fotografií"
     ]
+  },
+  {
+    "version": "1.1.4",
+    "releasedAt": "2026-07-31T15:00:00+02:00",
+    "title": "Instalovatelná webová aplikace a zlepšení výkonu",
+    "features": [
+      "Přidána možnost instalace webové aplikace na plochu nebo domovskou obrazovku",
+      "Zlepšení výkonu a rychlosti načítání aplikace"
+    ],
+    "fixes": [
+      "Opraveny drobné vizuální chyby"
+    ]
   }
 ]
