@@ -85,6 +85,23 @@ export default defineNuxtConfig({
       navigateFallback: '/',
       runtimeCaching: [
         {
+          // Cache Nuxt route documents so the app can cold-start offline.
+          urlPattern: /\/(?!api\/)(?!.*\.[a-zA-Z0-9]+$).*/,
+          handler: 'NetworkFirst',
+          method: 'GET',
+          options: {
+            cacheName: 'app-pages',
+            networkTimeoutSeconds: 4,
+            expiration: {
+              maxEntries: 40,
+              maxAgeSeconds: 60 * 60 * 24 * 7
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
           urlPattern: /\/api\/memories(?:\?.*)?$/,
           handler: 'NetworkFirst',
           method: 'GET',
