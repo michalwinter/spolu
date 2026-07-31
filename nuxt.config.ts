@@ -8,7 +8,8 @@ export default defineNuxtConfig({
     'nuxt-mongoose',
     '@nuxt/ui',
     '@nuxtjs/leaflet',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    '@vite-pwa/nuxt'
   ],
   css: ['~/assets/css/main.css'],
   app: {
@@ -31,6 +32,116 @@ export default defineNuxtConfig({
       leaveActiveClass: 'transition-opacity duration-150 ease-in',
       leaveFromClass: 'opacity-100',
       leaveToClass: 'opacity-0'
+    }
+  },
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      id: '/',
+      name: 'Spolu',
+      short_name: 'Spolu',
+      description: 'Sdílená timeline vzpomínek pro dva uživatele.',
+      lang: 'cs-CZ',
+      start_url: '/',
+      scope: '/',
+      display: 'standalone',
+      orientation: 'portrait',
+      background_color: '#ffffff',
+      theme_color: '#ef4444',
+      icons: [
+        {
+          src: '/pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png'
+        },
+        {
+          src: '/pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        },
+        {
+          src: '/pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable'
+        }
+      ]
+    },
+    devOptions: {
+      enabled: true,
+      suppressWarnings: true,
+      type: 'module'
+    },
+    workbox: {
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      skipWaiting: true,
+      navigateFallback: '/',
+      runtimeCaching: [
+        {
+          urlPattern: /\/api\/memories(?:\?.*)?$/,
+          handler: 'NetworkFirst',
+          method: 'GET',
+          options: {
+            cacheName: 'api-memories',
+            networkTimeoutSeconds: 4,
+            expiration: {
+              maxEntries: 80,
+              maxAgeSeconds: 60 * 60 * 24 * 7
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /\/api\/memories\/summary(?:\?.*)?$/,
+          handler: 'NetworkFirst',
+          method: 'GET',
+          options: {
+            cacheName: 'api-memories-summary',
+            networkTimeoutSeconds: 4,
+            expiration: {
+              maxEntries: 40,
+              maxAgeSeconds: 60 * 60 * 24 * 7
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /\/api\/gallery(?:\?.*)?$/,
+          handler: 'NetworkFirst',
+          method: 'GET',
+          options: {
+            cacheName: 'api-gallery',
+            networkTimeoutSeconds: 4,
+            expiration: {
+              maxEntries: 40,
+              maxAgeSeconds: 60 * 60 * 24 * 7
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /\/api\/photos\/.*/,
+          handler: 'CacheFirst',
+          method: 'GET',
+          options: {
+            cacheName: 'api-photos',
+            expiration: {
+              maxEntries: 500,
+              maxAgeSeconds: 60 * 60 * 24 * 30
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        }
+      ]
     }
   },
   runtimeConfig: {

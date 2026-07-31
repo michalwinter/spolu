@@ -23,7 +23,9 @@ watch(selectedDate, (newVal) => {
 
 <template>
   <div class="relative h-full bg-default scrollbar-none">
-    <ReleaseNotesChecker />
+    <ClientOnly>
+      <ReleaseNotesChecker />
+    </ClientOnly>
     <header class="sticky top-0 z-10 bg-default border-b border-muted">
       <UContainer class="flex items-center justify-between py-3.75">
         <div class="flex items-center gap-2">
