@@ -26,6 +26,13 @@ const currentPhoto = computed(() => {
   return props.photos[props.modelValue] ?? null
 })
 
+watch(
+  () => props.photos,
+  () => {
+    emit('update:modelValue', props.photos.length > 0 ? 0 : null)
+  }
+)
+
 function getPhotoAt(index: number) {
   return props.photos[index] ?? null
 }
