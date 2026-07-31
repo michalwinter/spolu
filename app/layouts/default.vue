@@ -22,7 +22,7 @@ watch(selectedDate, (newVal) => {
 </script>
 
 <template>
-  <div class="relative h-full bg-default scrollbar-none">
+  <div class="relative min-h-dvh bg-default scrollbar-none">
     <ClientOnly>
       <ReleaseNotesChecker />
     </ClientOnly>
