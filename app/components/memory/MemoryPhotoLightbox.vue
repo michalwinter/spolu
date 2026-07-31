@@ -81,6 +81,11 @@ function animateGo(delta: number) {
   dragOffsetX.value = -(window.innerWidth || 1) * direction
 }
 
+defineShortcuts({
+  arrowleft: () => animateGo(-1),
+  arrowright: () => animateGo(1),
+})
+
 function beginDrag(startX: number, startY: number) {
   if (props.modelValue === null || props.photos.length < 2) {
     return

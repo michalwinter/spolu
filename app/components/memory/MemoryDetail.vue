@@ -91,8 +91,8 @@ function goNext() {
 }
 
 defineShortcuts({
-	arrowright: goNext,
-	arrowleft: goPrev,
+	arrowdown: goNext,
+	arrowup: goPrev,
 })
 
 function selectPage(index: number) {

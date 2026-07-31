@@ -169,7 +169,7 @@ watch(
       textarea: { size: 'lg', variant: 'none', ui: { base: 'p-0' } }
     }">
       <div class="flex flex-col gap-2.5">
-        <UTextarea v-model="text" :rows="5" placeholder="Co se dělo, co jste zažili, kde jste byli..." class="mb-2.5 w-full" autoresize />
+        <UTextarea v-model="text" :rows="5" placeholder="Co se dělo, co jste zažili, kde jste byli..." class="mb-2.5 w-full rounded-none" autoresize />
         <UFormField label="Fotky">
           <MemoryImageUploadGrid v-model="newPhotos" :existing="existingPhotos" @remove-existing="removeExistingPhoto" />
         </UFormField>
