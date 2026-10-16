@@ -77,7 +77,7 @@ watch(selectedDate, (newVal) => {
 
     <div v-if="!isOnline" class="bg-warning/15 text-warning text-center text-xs py-1.5 flex items-center justify-center gap-1.5">
       <UIcon name="ph:cloud-slash" class="size-4" />
-      Jste offline – zobrazuji uložená data
+      Jste offline – zobrazují se uložená data
     </div>
 
     <UContainer class="pb-8">

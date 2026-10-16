@@ -11,29 +11,79 @@ const emit = defineEmits<{
   'remove-existing': [id: string]
 }>()
 
-const inputRef = ref<HTMLInputElement | null>(null)
-const previewUrls = computed(() => {
-  const files = model.value ?? []
-  return files.map(file => URL.createObjectURL(file))
-})
+const PREVIEW_SIZE = 320
 
-function cleanupPreviewUrls() {
-  for (const url of previewUrls.value) {
-    URL.revokeObjectURL(url)
+type Preview = { id: number, file: File, url: string | null }
+
+const inputRef = ref<HTMLInputElement | null>(null)
+const previews = shallowRef<Preview[]>([])
+const previewCache = new Map<File, Preview>()
+let nextPreviewId = 0
+
+/** Shrinks the photo so the grid does not have to decode full-size originals. */
+async function createThumbnailUrl(file: File) {
+  try {
+    const bitmap = await createImageBitmap(file, { resizeWidth: PREVIEW_SIZE, resizeQuality: 'medium', imageOrientation: 'from-image' })
+    const canvas = document.createElement('canvas')
+    canvas.width = bitmap.width
+    canvas.height = bitmap.height
+    canvas.getContext('2d')?.drawImage(bitmap, 0, 0)
+    bitmap.close()
+
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8))
+    if (blob) {
+      return URL.createObjectURL(blob)
+    }
+  } catch {
+    // Falls back to the original below.
   }
+
+  return URL.createObjectURL(file)
 }
 
-// watch(
-//   () => model.value ?? [],
-//   (files) => {
-//     cleanupPreviewUrls()
-//     previewUrls.value = files.map(file => URL.createObjectURL(file))
-//   },
-//   { immediate: true }
-// )
+function syncPreviews(files: File[]) {
+  const current = new Set(files)
+
+  for (const [file, preview] of previewCache) {
+    if (!current.has(file)) {
+      if (preview.url) {
+        URL.revokeObjectURL(preview.url)
+      }
+      previewCache.delete(file)
+    }
+  }
+
+  for (const file of files) {
+    if (previewCache.has(file)) {
+      continue
+    }
+
+    const preview: Preview = { id: nextPreviewId++, file, url: null }
+    previewCache.set(file, preview)
+
+    void createThumbnailUrl(file).then((url) => {
+      if (!previewCache.has(file)) {
+        URL.revokeObjectURL(url)
+        return
+      }
+
+      preview.url = url
+      previews.value = [...previews.value]
+    })
+  }
+
+  previews.value = files.map(file => previewCache.get(file)!)
+}
+
+watch(() => model.value ?? [], files => syncPreviews(files), { immediate: true })
 
 onUnmounted(() => {
-  cleanupPreviewUrls()
+  for (const preview of previewCache.values()) {
+    if (preview.url) {
+      URL.revokeObjectURL(preview.url)
+    }
+  }
+  previewCache.clear()
 })
 
 function openPicker() {
@@ -88,11 +138,11 @@ function removeFile(index: number) {
         />
       </div>
       <div
-        v-for="(previewUrl, index) in previewUrls"
-        :key="previewUrl"
-        class="relative aspect-square group rounded-lg overflow-hidden"
+        v-for="(preview, index) in previews"
+        :key="preview.id"
+        class="relative aspect-square group rounded-lg overflow-hidden bg-elevated"
       >
-        <img :src="previewUrl" alt="Nahraný obrázek" class="size-full object-cover">
+        <img v-if="preview.url" :src="preview.url" alt="Nahraný obrázek" decoding="async" class="size-full object-cover">
         <!-- <div class="absolute inset-0 bg-black/30 z-10"></div> -->
         <UButton
           icon="ph:x"
