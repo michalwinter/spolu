@@ -55,7 +55,7 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      id: '/',
+      id: '/spolu',
       name: 'Spolu',
       short_name: 'Spolu',
       description: 'Sdílená timeline vzpomínek pro dva uživatele.',
@@ -76,7 +76,7 @@ export default defineNuxtConfig({
           files: [
             {
               name: 'photos',
-              accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', '.jpg', '.jpeg', '.png', '.webp', '.gif']
+              accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
             }
           ]
         }
@@ -116,9 +116,10 @@ export default defineNuxtConfig({
       clientsClaim: true,
       skipWaiting: true,
       importScripts: ['/share-target-sw.js'],
+      globIgnores: ['**/share-target-sw.js'],
       // The app is a SPA, so every navigation is answered with the precached shell.
       navigateFallback: '/',
-      navigateFallbackDenylist: [/^\/api\//],
+      navigateFallbackDenylist: [/^\/api\//, /^\/share-target/],
       globPatterns: ['**/*.{js,css,html,png,svg,ico,webp,woff,woff2}'],
       // Fetched by the service worker on install, so it carries the runtime config of the running server.
       additionalManifestEntries: [{ url: '/', revision: String(Date.now()) }],
