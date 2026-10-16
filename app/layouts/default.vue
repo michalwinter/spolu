@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useOnline } from '@vueuse/core'
+
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 // 1. Importujeme správný typ
 import type { CalendarDate } from '@internationalized/date'
 
-const { user, clear } = useUserSession()
+const { user } = useUserSession()
+const isOnline = useOnline()
 const isSettingsOpen = ref(false)
 const { public: { appVersion, appBuild } } = useRuntimeConfig()
 const versionLabel = computed(() => appBuild ? `v${appVersion} (${appBuild})` : `v${appVersion}`)
@@ -71,6 +74,11 @@ watch(selectedDate, (newVal) => {
         </div>
       </UContainer>
     </header>
+
+    <div v-if="!isOnline" class="bg-warning/15 text-warning text-center text-xs py-1.5 flex items-center justify-center gap-1.5">
+      <UIcon name="ph:cloud-slash" class="size-4" />
+      Jste offline – zobrazuji uložená data
+    </div>
 
     <UContainer class="pb-8">
       <slot />

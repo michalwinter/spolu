@@ -2,6 +2,8 @@ import pkg from './package.json'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  // SPA: the HTML shell is static, so it can be precached and opened offline, and it never embeds user data.
+  ssr: false,
   devtools: { enabled: true },
   modules: [
     'nuxt-auth-utils',
@@ -12,6 +14,22 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt'
   ],
   css: ['~/assets/css/main.css'],
+  icon: {
+    // Icons are bundled into the client; otherwise they are requested from the server and vanish offline.
+    clientBundle: {
+      scan: true,
+      // výchozí ikony Nuxt UI (zavření, toasty, výběry…) se v kódu nevyskytují, ale používají se
+      icons: [
+        'lucide:x', 'lucide:check', 'lucide:minus', 'lucide:plus', 'lucide:info', 'lucide:search',
+        'lucide:upload', 'lucide:ellipsis', 'lucide:loader-circle', 'lucide:circle-alert',
+        'lucide:circle-check', 'lucide:circle-x', 'lucide:triangle-alert', 'lucide:eye', 'lucide:eye-off',
+        'lucide:arrow-left', 'lucide:arrow-right', 'lucide:arrow-up', 'lucide:arrow-down',
+        'lucide:chevron-down', 'lucide:chevron-up', 'lucide:chevron-left', 'lucide:chevron-right',
+        'lucide:chevrons-left', 'lucide:chevrons-right', 'lucide:menu', 'lucide:sun', 'lucide:moon',
+        'lucide:monitor', 'lucide:rotate-ccw', 'lucide:copy', 'lucide:copy-check'
+      ]
+    }
+  },
   app: {
     head: {
       link: [
@@ -82,85 +100,22 @@ export default defineNuxtConfig({
       cleanupOutdatedCaches: true,
       clientsClaim: true,
       skipWaiting: true,
+      // The app is a SPA, so every navigation is answered with the precached shell.
       navigateFallback: '/',
+      navigateFallbackDenylist: [/^\/api\//],
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,webp,woff,woff2}'],
+      // Fetched by the service worker on install, so it carries the runtime config of the running server.
+      additionalManifestEntries: [{ url: '/', revision: String(Date.now()) }],
       runtimeCaching: [
         {
-          // Cache Nuxt route documents so the app can cold-start offline.
-          urlPattern: /\/(?!api\/)(?!.*\.[a-zA-Z0-9]+$).*/,
-          handler: 'NetworkFirst',
-          method: 'GET',
-          options: {
-            cacheName: 'app-pages',
-            networkTimeoutSeconds: 4,
-            expiration: {
-              maxEntries: 40,
-              maxAgeSeconds: 60 * 60 * 24 * 7
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        },
-        {
-          urlPattern: /\/api\/memories(?:\?.*)?$/,
-          handler: 'NetworkFirst',
-          method: 'GET',
-          options: {
-            cacheName: 'api-memories',
-            networkTimeoutSeconds: 4,
-            expiration: {
-              maxEntries: 80,
-              maxAgeSeconds: 60 * 60 * 24 * 7
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        },
-        {
-          urlPattern: /\/api\/memories\/summary(?:\?.*)?$/,
-          handler: 'NetworkFirst',
-          method: 'GET',
-          options: {
-            cacheName: 'api-memories-summary',
-            networkTimeoutSeconds: 4,
-            expiration: {
-              maxEntries: 40,
-              maxAgeSeconds: 60 * 60 * 24 * 7
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        },
-        {
-          urlPattern: /\/api\/gallery(?:\?.*)?$/,
-          handler: 'NetworkFirst',
-          method: 'GET',
-          options: {
-            cacheName: 'api-gallery',
-            networkTimeoutSeconds: 4,
-            expiration: {
-              maxEntries: 40,
-              maxAgeSeconds: 60 * 60 * 24 * 7
-            },
-            cacheableResponse: {
-              statuses: [0, 200]
-            }
-          }
-        },
-        {
-          urlPattern: /\/api\/photos\/.*/,
+          // Photos are also downloaded ahead of time by the app (see memoryPhotoCache.ts).
+          urlPattern: /\/api\/photos\/.+/,
           handler: 'CacheFirst',
           method: 'GET',
           options: {
             cacheName: 'api-photos',
-            expiration: {
-              maxEntries: 500,
-              maxAgeSeconds: 60 * 60 * 24 * 30
-            },
             cacheableResponse: {
-              statuses: [0, 200]
+              statuses: [200]
             }
           }
         }

@@ -17,6 +17,7 @@ const isMobile = breakpoints.smaller('sm')
 const selectedDate = useState<Date | null>('calendar-selected-date', () => null)
 
 const { getReportById, createMemory, markSummaryChanged, updateMemory } = useMemories()
+const toast = useToast()
 const report = computed(() => props.reportId ? getReportById(props.reportId) : null)
 
 const tz = getLocalTimeZone()
@@ -133,7 +134,14 @@ async function onSubmit() {
     if (props.reportId && props.memoryId) {
       await updateMemory(props.reportId, props.memoryId, payload)
     } else {
-      await createMemory(payload)
+      const result = await createMemory(payload)
+      if (result.queued) {
+        toast.add({
+          title: 'Jste offline. Vzpomínka se odešle po obnovení připojení.',
+          icon: 'ph:cloud-slash',
+          color: 'warning'
+        })
+      }
     }
 
     emit('saved')

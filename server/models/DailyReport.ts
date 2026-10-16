@@ -21,6 +21,7 @@ export interface DailyMemoryDocument {
   photos: MemoryPhotoDocument[]
   authorId: Schema.Types.ObjectId
   tags?: string[]
+  clientId?: string
 }
 
 export interface DailyReportDocument {
@@ -79,7 +80,9 @@ export const DailyReport = defineMongooseModel<DailyReportDocument>({
           ref: 'User',
           required: true
         },
-        tags: [{ type: String, trim: true, lowercase: true }]
+        tags: [{ type: String, trim: true, lowercase: true }],
+        // idempotency key sent by the client, protects against duplicates when a request is retried
+        clientId: { type: String, trim: true, maxlength: 64 }
       }
     ]
   },

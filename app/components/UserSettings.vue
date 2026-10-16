@@ -1,19 +1,40 @@
 <script setup lang="ts">
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
-const { clear } = useUserSession();
+const { logout: signOut } = useOfflineSession()
+const toast = useToast()
 
 const { public: { appVersion } } = useRuntimeConfig()
 const versionLabel = computed(() => `v${appVersion}`)
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobile = breakpoints.smaller('sm')
+const {
+  pendingCreates,
+  pendingCreatesCount,
+  isSyncingPendingCreates,
+  isSyncingOfflineData,
+  syncAll,
+} = useMemories()
 
 const isPasswordChangeOpen = ref(false);
 const passwordChangeSubmitClick = ref(false);
 
 async function logout() {
-  await clear()
-  await navigateTo('/login')
+  if (!navigator.onLine) {
+    toast.add({ title: 'Odhlášení vyžaduje připojení k internetu.', color: 'warning' })
+    return
+  }
+
+  if (pendingCreatesCount.value > 0
+    && !window.confirm(`Máte ${pendingCreatesCount.value} neodeslaných vzpomínek, které se odhlášením smažou. Opravdu se odhlásit?`)) {
+    return
+  }
+
+  try {
+    await signOut()
+  } catch {
+    toast.add({ title: 'Odhlášení se nepodařilo.', color: 'error' })
+  }
 }
 </script>
 
@@ -35,6 +56,32 @@ async function logout() {
         <UButton block icon="ph:sign-out" label="Odhlásit se" variant="soft" @click="logout()" />
       </div>
     </div>
+
+    <div class="flex flex-col gap-2.5">
+      <h3 class="text-xs font-semibold text-toned">Offline synchronizace</h3>
+      <div class="rounded-lg border border-default p-3.75 flex flex-col gap-2.5">
+        <p class="text-sm text-default">
+          Čekající vzpomínky k odeslání: <strong>{{ pendingCreatesCount }}</strong>
+        </p>
+        <p class="text-xs text-toned">
+          Všechny vzpomínky a fotky se ukládají do zařízení, aby šly zobrazit i bez připojení.
+        </p>
+        <UButton
+          icon="ph:arrows-clockwise"
+          :loading="isSyncingPendingCreates || isSyncingOfflineData"
+          variant="soft"
+          color="primary"
+          label="Synchronizovat nyní"
+          @click="syncAll()"
+        />
+        <ul v-if="pendingCreates.length" class="text-xs text-toned flex flex-col gap-1.25">
+          <li v-for="item in pendingCreates" :key="item.id">
+            {{ new Date(item.createdAt).toLocaleString('cs-CZ') }} · {{ item.text.slice(0, 50) }}{{ item.text.length > 50 ? '…' : '' }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
     <div>
       <h3 class="text-xs font-semibold text-toned">O aplikaci</h3>
       <p class="text-xs text-toned">Verze: {{ versionLabel }}</p>

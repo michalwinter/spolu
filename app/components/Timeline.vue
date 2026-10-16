@@ -6,22 +6,55 @@ const hasMore = ref(true)
 const pending = ref(false)
 const bottomObserver = ref<HTMLElement | null>(null)
 const {
+  fetchLatestPage,
   timelineReportIds,
   getReportById,
+  pendingCreates,
   replaceTimelineReports,
   appendTimelineReports,
 } = useMemories()
 
-// 1. Prvotní SSR načtení (bez parametru before = načte nejnovější)
-const { data, error } = await useFetch<MemoriesGetResponse>('/api/memories', {
-  query: { limit }
+const pendingSections = computed(() => {
+  const grouped = new Map<string, typeof pendingCreates.value>()
+
+  for (const item of pendingCreates.value) {
+    const dayKey = item.dateISO.split('T')[0] || item.dateISO
+    const group = grouped.get(dayKey)
+
+    if (group) {
+      group.push(item)
+    } else {
+      grouped.set(dayKey, [item])
+    }
+  }
+
+  return Array.from(grouped.entries())
+    .sort((left, right) => right[0].localeCompare(left[0]))
+    .map(([dayKey, items]) => ({
+      dayKey,
+      items: [...items].sort((left, right) => right.createdAt.localeCompare(left.createdAt)),
+      label: new Date(dayKey).toLocaleDateString('cs-CZ', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    }))
 })
 
-if (data.value) {
+// Served from the server, or from the offline copy when the server cannot be reached.
+try {
+  const data = await fetchLatestPage(undefined, limit)
+
   if (!timelineReportIds.value.length) {
-    replaceTimelineReports(data.value.items)
+    replaceTimelineReports(data.items)
+    hasMore.value = data.hasMore
+  } else {
+    appendTimelineReports(data.items)
   }
-  hasMore.value = data.value.hasMore
+} catch (e) {
+  console.error('[timeline] Initial fetch failed', e)
+  hasMore.value = false
 }
 
 const loadMore = async () => {
@@ -36,12 +69,7 @@ const loadMore = async () => {
       return
     }
     
-    const res = await $fetch<MemoriesGetResponse>('/api/memories', {
-      query: { 
-        limit,
-        before: lastReport.date // Musí to být ISO string, což tvůj serializeDailyReport pravděpodobně dělá
-      }
-    })
+    const res = await fetchLatestPage(lastReport.date, limit)
 
     appendTimelineReports(res.items)
     hasMore.value = res.hasMore
@@ -143,6 +171,44 @@ useIntersectionObserver(bottomObserver, ([entry]) => {
 
 <template>
   <div class="mt-7.5 flex flex-col gap-7.5">
+
+    <section v-for="section in pendingSections" :key="section.dayKey" class="flex flex-col gap-3">
+      <div class="flex items-center gap-2 text-sm text-highlighted font-semibold">
+        <span>{{ section.label }}</span>
+        <UBadge color="warning" variant="subtle" size="sm">Čeká na synchronizaci</UBadge>
+      </div>
+
+      <div class="rounded-lg flex flex-col overflow-hidden ring-2 ring-warning/40 divide-y divide-default bg-default/80">
+        <article
+          v-for="item in section.items"
+          :key="item.id"
+          class="p-4 flex flex-col gap-3"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <UBadge color="warning" variant="soft" size="sm">Offline</UBadge>
+              <span v-if="item.time" class="text-sm text-toned">{{ item.time }}</span>
+              <span v-if="item.location" class="text-sm text-toned">{{ item.location }}</span>
+            </div>
+            <span class="text-xs text-dimmed">{{ new Date(item.createdAt).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }) }}</span>
+          </div>
+
+          <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ item.text }}</p>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs text-dimmed">
+            <span v-if="item.photoCount">{{ item.photoCount }} {{ item.photoCount === 1 ? 'fotka' : item.photoCount >= 2 && item.photoCount <= 4 ? 'fotky' : 'fotek' }}</span>
+            <span v-if="item.attempts > 0">Pokusy o odeslání: {{ item.attempts }}</span>
+            <span v-if="item.lastError">{{ item.lastError }}</span>
+          </div>
+
+          <div v-if="item.tags.length" class="flex flex-wrap gap-1.5">
+            <UBadge v-for="tag in item.tags" :key="tag" color="neutral" variant="soft" size="sm">
+              #{{ tag }}
+            </UBadge>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <DailyReport v-for="reportId in timelineReportIds" :key="reportId" :report-id="reportId" />
 

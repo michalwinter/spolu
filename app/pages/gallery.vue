@@ -5,7 +5,8 @@ definePageMeta({
   layout: 'blank',
 })
 
-const { data: photos, pending, error } = await useFetch<GalleryPhoto[]>('/api/gallery')
+const { fetchGallery } = useMemories()
+const { data: photos, pending, error } = await useAsyncData<GalleryPhoto[]>('gallery', () => fetchGallery())
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('cs-CZ', {

@@ -24,5 +24,20 @@
     "fixes": [
       "Opraveny drobné vizuální chyby"
     ]
+  },
+  {
+    "version": "1.2.0",
+    "releasedAt": "2026-10-16T15:10:00+02:00",
+    "title": "Plnohodnotný offline režim",
+    "features": [
+      "Aplikace se nyní spustí a funguje i bez připojení – včetně všech vzpomínek, fotek, kalendáře a galerie",
+      "Vzpomínky a fotky se automaticky ukládají do zařízení při přihlášení a po každém obnovení připojení",
+      "Vzpomínky vytvořené offline se zařadí do fronty a po připojení se samy odešlou",
+      "Ruční synchronizace v nastavení a upozornění, když jste offline"
+    ],
+    "fixes": [
+      "Po odhlášení se ze zařízení smažou všechna uložená data",
+      "Opraveno zdvojení vzpomínky při opakovaném odeslání po výpadku připojení"
+    ]
   }
 ]

@@ -8,7 +8,8 @@ const fieldsSchema = z.object({
   location: z.string().trim().max(200).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
-  tags: z.string().optional()
+  tags: z.string().optional(),
+  clientId: z.string().trim().min(1).max(64).optional()
 })
 
 const MAX_PHOTOS_PER_MEMORY = 20
@@ -59,6 +60,17 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    const clientId = parsedFields.data.clientId
+    if (clientId) {
+      const existing = await DailyReport.findOne({
+        memories: { $elemMatch: { clientId, authorId: session.user.id } }
+      }).populate('memories.authorId', 'name username').lean()
+
+      if (existing) {
+        return serializeDailyReport(existing as unknown as LeanDailyReport)
+      }
+    }
+
     const photos = []
     for (const part of fileParts) {
       photos.push({ ...(await saveUploadedPhoto(part)), authorId: session.user.id })
@@ -77,7 +89,8 @@ export default defineEventHandler(async (event) => {
       lng: parsedFields.data.lng ?? photoWithGps?.lng ?? undefined,
       photos,
       authorId: session.user.id,
-      tags: tags.length ? tags : undefined
+      tags: tags.length ? tags : undefined,
+      clientId
     }
 
     const report = await DailyReport.findOneAndUpdate(
