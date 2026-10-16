@@ -53,8 +53,15 @@ export function useMemoryDraft() {
    * `replace` is set or none exists. Returns how many photos did not fit into the limit.
    */
   async function addPhotos(files: File[], options: { replace?: boolean, date?: Date | null } = {}) {
-    const current = options.replace ? null : (draft.value ?? await refreshDraft())
-    const existingPhotos = current?.photos ?? []
+    const reactiveCurrent = options.replace ? null : (draft.value ?? await refreshDraft())
+    // The draft lives in reactive state; IndexedDB cannot clone Vue proxies, so copy it into plain data.
+    const current = reactiveCurrent ? toRaw(reactiveCurrent) : null
+    const existingPhotos = (current?.photos ?? []).map(photo => ({
+      name: photo.name,
+      type: photo.type,
+      lastModified: photo.lastModified,
+      blob: toRaw(photo).blob
+    }))
     const accepted = files.slice(0, Math.max(0, MAX_SHARED_PHOTOS - existingPhotos.length))
     const photos = [
       ...existingPhotos,
@@ -62,7 +69,16 @@ export function useMemoryDraft() {
     ]
 
     if (current) {
-      await saveDraft({ ...current, photos })
+      await saveDraft({
+        dateISO: current.dateISO,
+        time: current.time,
+        text: current.text,
+        location: current.location,
+        lat: current.lat,
+        lng: current.lng,
+        tags: [...toRaw(current.tags)],
+        photos
+      })
     } else {
       const base = options.date ? new Date(options.date) : new Date()
       await saveDraft({
