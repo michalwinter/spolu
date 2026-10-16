@@ -29,12 +29,34 @@ export type QueuedCreateItem = {
   lastError?: string
 }
 
+export type MemoryDraftPhoto = {
+  name: string
+  type: string
+  lastModified: number
+  blob: Blob
+}
+
+export type MemoryDraft = {
+  id: string
+  userId: string
+  updatedAt: string
+  dateISO: string
+  time?: string
+  text: string
+  location: string
+  lat?: number
+  lng?: number
+  tags: string[]
+  photos: MemoryDraftPhoto[]
+}
+
 export const OFFLINE_USER_KEY = 'spolu:offline-user'
 
 const DB_NAME = 'spolu-offline'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const REPORTS_STORE = 'reports'
 const CREATE_QUEUE_STORE = 'createQueue'
+const MEMORY_DRAFTS_STORE = 'memoryDrafts'
 
 function hasIndexedDb() {
   return import.meta.client && typeof indexedDB !== 'undefined'
@@ -57,6 +79,10 @@ function openDb(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains(CREATE_QUEUE_STORE)) {
         db.createObjectStore(CREATE_QUEUE_STORE, { keyPath: 'id' })
+      }
+
+      if (!db.objectStoreNames.contains(MEMORY_DRAFTS_STORE)) {
+        db.createObjectStore(MEMORY_DRAFTS_STORE, { keyPath: 'id' })
       }
 
       // Replaced by the per-report store.
@@ -203,6 +229,36 @@ export async function removeQueuedCreate(id: string) {
   })
 }
 
+export async function readMemoryDraft(userId: string) {
+  if (!hasIndexedDb()) {
+    return null
+  }
+
+  return transact(MEMORY_DRAFTS_STORE, 'readonly', tx =>
+    promisify(tx.objectStore(MEMORY_DRAFTS_STORE).get(userId) as IDBRequest<MemoryDraft | undefined>)
+  ).then(draft => draft?.userId === userId ? draft : null)
+}
+
+export async function putMemoryDraft(draft: MemoryDraft) {
+  if (!hasIndexedDb()) {
+    throw new Error('IndexedDB is not available')
+  }
+
+  await transact(MEMORY_DRAFTS_STORE, 'readwrite', (tx) => {
+    tx.objectStore(MEMORY_DRAFTS_STORE).put(draft)
+  })
+}
+
+export async function deleteMemoryDraft(userId: string) {
+  if (!hasIndexedDb()) {
+    return
+  }
+
+  await transact(MEMORY_DRAFTS_STORE, 'readwrite', (tx) => {
+    tx.objectStore(MEMORY_DRAFTS_STORE).delete(userId)
+  })
+}
+
 /**
  * Removes every locally stored copy of private data: memories, photos and the remembered
  * user. The queue of unsent memories is kept only when `keepQueue` is set.
@@ -217,7 +273,9 @@ export async function clearOfflineData(options: { keepQueue?: boolean } = {}) {
   const tasks: Promise<unknown>[] = [clearPhotoCaches()]
 
   if (hasIndexedDb()) {
-    const stores = options.keepQueue ? [REPORTS_STORE] : [REPORTS_STORE, CREATE_QUEUE_STORE]
+    const stores = options.keepQueue
+      ? [REPORTS_STORE, MEMORY_DRAFTS_STORE]
+      : [REPORTS_STORE, CREATE_QUEUE_STORE, MEMORY_DRAFTS_STORE]
     tasks.push(transact(stores, 'readwrite', (tx) => {
       for (const name of stores) {
         tx.objectStore(name).clear()

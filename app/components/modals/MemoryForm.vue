@@ -11,20 +11,32 @@ const model = defineModel<boolean>()
 const props = defineProps<{
   reportId?: string
   memoryId?: string
+  resumeDraft?: boolean
 }>()
 
-const formRef = ref<{ isDirty: boolean } | null>(null)
+const formRef = ref<{ isDirty: boolean, flushDraftSave: () => Promise<void> } | null>(null)
 const isDiscardConfirmOpen = ref(false)
+const toast = useToast()
 
 async function onSaved() {
   model.value = false
   summaryVersion.value += 1
 }
 
-function onOpenChange(open: boolean) {
-  if (!open && formRef.value?.isDirty) {
-    isDiscardConfirmOpen.value = true
-    return
+async function onOpenChange(open: boolean) {
+  if (!open) {
+    if (props.memoryId && formRef.value?.isDirty) {
+      isDiscardConfirmOpen.value = true
+      return
+    }
+
+    try {
+      await formRef.value?.flushDraftSave()
+    } catch (error) {
+      console.error('[memory-modal] Nepodařilo se uložit koncept před zavřením', error)
+      toast.add({ title: 'Koncept se nepodařilo uložit. Zkuste to prosím znovu.', color: 'error' })
+      return
+    }
   }
   model.value = open
 }
@@ -42,9 +54,11 @@ function discard() {
   >
     <template #content>
       <MemoryForm 
+        v-if="model"
         ref="formRef"
         :report-id="reportId"
         :memory-id="memoryId"
+        :resume-draft="resumeDraft"
         @saved="onSaved"
       />
     </template>
@@ -53,9 +67,11 @@ function discard() {
   <UModal v-else :open="model" @update:open="onOpenChange" :ui="{ content: 'max-w-lg divide-y-0' }">
     <template #content>
       <MemoryForm 
+        v-if="model"
         ref="formRef"
         :report-id="reportId"
         :memory-id="memoryId"
+        :resume-draft="resumeDraft"
         @saved="onSaved"
       />
     </template>

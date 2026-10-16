@@ -6,18 +6,19 @@ Cíl: když se formulář nové vzpomínky omylem zavře nebo se stránka obnov�
 
 **Rozsah**
 - Jeden koncept pro formulář *nové* vzpomínky (úpravy existující vzpomínky se do konceptu neukládají).
-- Ukládá se text, lokace, souřadnice, tagy, datum a čas.
-- Fotky ve verzi 1 vynechat (`File` objekty nejdou do `localStorage`). Případně později přes IndexedDB (`memoryOfflineStore`).
+- Ukládá se text, lokace, souřadnice, tagy, datum, čas a fotky.
+- Koncept i fotky se ukládají do IndexedDB (`memoryOfflineStore`); fotky zůstávají jako Bloby.
 
 **Chování**
 - Automatické ukládání s debounce (~500 ms), bez tlačítka „Uložit koncept“.
-- Koncept se smaže po úspěšném uložení vzpomínky, po explicitním „Zahodit“ a při odhlášení.
-- Při otevření formuláře se koncept předvyplní a nahoře se zobrazí štítek „Obnovený koncept z HH:MM“ s tlačítkem „Začít znovu“.
-- Na tlačítku pro přidání vzpomínky na hlavní stránce indikátor „Rozepsáno“.
+- Zavření formuláře koncept zachová bez potvrzovacího dialogu; před zavřením se uloží i změny z posledních 500 ms.
+- Koncept se smaže po úspěšném uložení vzpomínky, po potvrzeném „Začít znovu“ a při odhlášení.
+- Na hlavní stránce se zobrazí tlačítko pro pokračování v konceptu. Při klepnutí na FAB s existujícím konceptem lze pokračovat, nebo vytvořit novou vzpomínku.
+- Vytvoření nové vzpomínky při existujícím konceptu vyžaduje potvrzení jeho nahrazení.
 
 **Technicky**
-- `useLocalStorage` z VueUse, klíč vázaný na `user.id`.
-- Logika v `app/components/memory/MemoryForm.vue` jen v režimu vytváření (bez `memoryId`).
-- Dialog „Zahodit změny?“ v `app/components/modals/MemoryForm.vue` se při automatickém ukládání zobrazí jen pro explicitní zahození.
+- IndexedDB store pro koncepty s klíčem vázaným na `user.id`; logout ho maže spolu s ostatními soukromými offline daty.
+- Logika v `app/components/memory/MemoryForm.vue` jen pro novou vzpomínku (bez `memoryId`).
+- Dialog pro zahození se zobrazuje jen při explicitním zahození nebo nahrazení konceptu. Úpravy existující vzpomínky si zachovávají potvrzení při zavření neuložených změn.
 
 **Nebudeme dělat:** více konceptů najednou se seznamem.

@@ -12,6 +12,11 @@ const selectedDateLabel = computed(() => {
 })
 
 const isSlideoverOpen = ref(false)
+const isDraftChoiceOpen = ref(false)
+const isReplaceDraftConfirmOpen = ref(false)
+const resumeDraft = ref(false)
+const { draft, refreshDraft, removeDraft } = useMemoryDraft()
+const toast = useToast()
 
 const editingMemory = ref<any | null>(null) 
 
@@ -27,8 +32,50 @@ watch(selectedDate, (newDate) => {
 
 function openCreateForm() {
   editingMemory.value = null
+  if (draft.value) {
+    isDraftChoiceOpen.value = true
+    return
+  }
+  resumeDraft.value = false
   isSlideoverOpen.value = true
 }
+
+function continueDraft() {
+  isDraftChoiceOpen.value = false
+  resumeDraft.value = true
+  isSlideoverOpen.value = true
+}
+
+function startNewMemory() {
+  isDraftChoiceOpen.value = false
+  if (draft.value) {
+    isReplaceDraftConfirmOpen.value = true
+    return
+  }
+  resumeDraft.value = false
+  isSlideoverOpen.value = true
+}
+
+async function confirmReplaceDraft() {
+  try {
+    await removeDraft()
+    isReplaceDraftConfirmOpen.value = false
+    resumeDraft.value = false
+    isSlideoverOpen.value = true
+  } catch (error) {
+    console.error('[memory-page] Nepodařilo se nahradit koncept', error)
+    toast.add({ title: 'Koncept se nepodařilo smazat. Zkuste to prosím znovu.', color: 'error' })
+  }
+}
+
+onMounted(async () => {
+  try {
+    await refreshDraft()
+  } catch (error) {
+    console.error('[memory-page] Nepodařilo se načíst koncept', error)
+    toast.add({ title: 'Rozepsanou vzpomínku se nepodařilo načíst.', color: 'error' })
+  }
+})
 
 </script>
 
@@ -69,6 +116,17 @@ function openCreateForm() {
 
     <Timeline v-if="!selectedDate" />
     
+    <UChip v-if="draft" class="fixed bottom-24 right-5 z-40" :ui="{ base: 'animate-pulse duration-150' }">
+      <UButton
+        icon="ph:note-duotone"
+        label="Pokračovat"
+        color="neutral"
+        variant="soft"
+        class="shadow-lg"
+        @click="continueDraft"
+      />
+    </UChip>
+
     <!-- Plovoucí FAB (Floating Action Button) tlačítko pro mobily -->
     <UButton 
       icon="ph:plus-bold" 
@@ -81,6 +139,24 @@ function openCreateForm() {
     />
     
     <!-- Výsuvný panel zprava (Slideover) pro vytvoření/úpravu vzpomínky na mobile -->
-    <ModalsMemoryForm v-model="isSlideoverOpen" />
+    <ModalsMemoryForm v-model="isSlideoverOpen" :resume-draft="resumeDraft" />
+
+    <UModal v-model:open="isDraftChoiceOpen" title="Rozepsaná vzpomínka" description="Chcete pokračovat v uloženém konceptu, nebo začít novou vzpomínku?" :ui="{ content: 'max-w-sm' }">
+      <template #footer>
+        <div class="flex w-full justify-end gap-2.5">
+          <UButton label="Nová vzpomínka" color="neutral" variant="ghost" @click="startNewMemory" />
+          <UButton label="Pokračovat" color="primary" @click="continueDraft" />
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="isReplaceDraftConfirmOpen" title="Nahradit rozepsanou vzpomínku?" description="Současný koncept včetně přidaných fotek bude smazán. Tuto akci nelze vrátit zpět." :ui="{ content: 'max-w-sm' }" :close="false">
+      <template #footer>
+        <div class="flex w-full justify-end gap-2.5">
+          <UButton label="Zrušit" color="neutral" variant="ghost" @click="() => { isReplaceDraftConfirmOpen = false }" />
+          <UButton label="Zahodit a vytvořit novou" color="error" @click="confirmReplaceDraft" />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
