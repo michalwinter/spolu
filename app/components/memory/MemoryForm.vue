@@ -84,7 +84,26 @@ function resetForm() {
   newPhotos.value = null
   removedPhotoIds.value = []
   errorMessage.value = ''
+  initialSnapshot.value = currentSnapshot()
 }
+
+function currentSnapshot() {
+  return JSON.stringify([
+    text.value,
+    location.value,
+    tags.value,
+    dateValue.value.toString(),
+    enableTimeInput.value,
+    enableTimeInput.value ? timeValue.value.toString() : null,
+    newPhotos.value?.length ?? 0,
+    removedPhotoIds.value
+  ])
+}
+
+const initialSnapshot = ref('')
+const isDirty = computed(() => initialSnapshot.value !== currentSnapshot())
+
+defineExpose({ isDirty })
 
 function removeExistingPhoto(photoId: string) {
   existingPhotos.value = existingPhotos.value.filter(p => p.id !== photoId)
@@ -177,7 +196,7 @@ watch(
       textarea: { size: 'lg', variant: 'none', ui: { base: 'p-0' } }
     }">
       <div class="flex flex-col gap-2.5">
-        <UTextarea v-model="text" :rows="5" placeholder="Co se dělo, co jste zažili, kde jste byli..." class="mb-2.5 w-full rounded-none" autoresize />
+        <UTextarea v-model="text" :rows="5" placeholder="Co se dělo, co jste zažili, kde jste byli..." class="mb-2.5 w-full" :ui="{ base: 'rounded-none' }" autoresize />
         <UFormField label="Fotky">
           <MemoryImageUploadGrid v-model="newPhotos" :existing="existingPhotos" @remove-existing="removeExistingPhoto" />
         </UFormField>

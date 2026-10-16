@@ -146,6 +146,10 @@ function onTouchEnd(event: TouchEvent) {
 	const delta = endX - touchStartX.value
 
 	if (Math.abs(delta) >= SWIPE_THRESHOLD) {
+		// Prevents the synthetic click from hitting a photo of the newly shown memory
+		if (event.cancelable) {
+			event.preventDefault()
+		}
 		if (delta < 0) {
 			goNext()
 		} else {
@@ -155,6 +159,10 @@ function onTouchEnd(event: TouchEvent) {
 
 	touchStartX.value = null
 }
+
+watch(activeIndex, () => {
+	activePhotoIndex.value = null
+})
 
 watch(
 	() => [props.reportId, report.value?.updatedAt, report.value?.memories.length, props.memoryIndex] as const,

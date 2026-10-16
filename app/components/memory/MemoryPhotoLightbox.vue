@@ -29,6 +29,9 @@ const currentPhoto = computed(() => {
 watch(
   () => props.photos,
   () => {
+    if (props.modelValue === null) {
+      return
+    }
     emit('update:modelValue', props.photos.length > 0 ? 0 : null)
   }
 )

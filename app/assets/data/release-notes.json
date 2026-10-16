@@ -39,5 +39,15 @@
       "Po odhlášení se ze zařízení smažou všechna uložená data",
       "Opraveno zdvojení vzpomínky při opakovaném odeslání po výpadku připojení"
     ]
+  },
+  {
+    "version": "1.2.1",
+    "releasedAt": "2026-10-16T22:00:00+02:00",
+    "title": "Opravy v detailu vzpomínky",
+    "features": [],
+    "fixes": [
+      "Opraveno samovolné otevření fotky při přepnutí na jinou vzpomínku daného dne",
+      "Opraveno zaoblení textového pole ve formuláři vzpomínky",
+      "Formulář vzpomínky se na mobilu už nezavře omylem tažením dolů (jen za úchyt) a při neuložených změnách se před zavřením zobrazí potvrzení"    ]
   }
 ]
