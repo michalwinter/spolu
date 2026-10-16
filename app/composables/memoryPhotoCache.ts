@@ -76,6 +76,6 @@ export async function clearPhotoCaches() {
     return
   }
 
-  await Promise.allSettled([PHOTO_CACHE_NAME, 'app-pages', 'api-memories', 'api-memories-summary', 'api-gallery']
+  await Promise.allSettled([PHOTO_CACHE_NAME, 'app-pages', 'api-memories', 'api-memories-summary', 'api-gallery', 'share-target']
     .map(name => caches.delete(name)))
 }

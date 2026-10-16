@@ -66,6 +66,21 @@ export default defineNuxtConfig({
       orientation: 'portrait',
       background_color: '#ffffff',
       theme_color: '#ef4444',
+      // Photos shared from the gallery are caught by public/share-target-sw.js.
+      // HEIC/HEIF is left out because the server cannot process it.
+      share_target: {
+        action: '/share-target',
+        method: 'POST',
+        enctype: 'multipart/form-data',
+        params: {
+          files: [
+            {
+              name: 'photos',
+              accept: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', '.jpg', '.jpeg', '.png', '.webp', '.gif']
+            }
+          ]
+        }
+      },
       icons: [
         {
           src: '/pwa-192x192.png',
@@ -100,6 +115,7 @@ export default defineNuxtConfig({
       cleanupOutdatedCaches: true,
       clientsClaim: true,
       skipWaiting: true,
+      importScripts: ['/share-target-sw.js'],
       // The app is a SPA, so every navigation is answered with the precached shell.
       navigateFallback: '/',
       navigateFallbackDenylist: [/^\/api\//],
@@ -127,6 +143,7 @@ export default defineNuxtConfig({
     public: {
       mapyApiKey: '',
       appVersion: process.env.NUXT_PUBLIC_APP_VERSION || pkg.version || 'dev',
+      appBuild: process.env.NUXT_PUBLIC_APP_BUILD || '',
     },
     mongoose: {
       uri: 'mongodb://127.0.0.1:27017/spolu'

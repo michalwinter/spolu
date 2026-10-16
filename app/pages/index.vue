@@ -15,8 +15,11 @@ const isSlideoverOpen = ref(false)
 const isDraftChoiceOpen = ref(false)
 const isReplaceDraftConfirmOpen = ref(false)
 const resumeDraft = ref(false)
-const { draft, refreshDraft, removeDraft } = useMemoryDraft()
+const { draft, refreshDraft, addPhotos, removeDraft } = useMemoryDraft()
 const toast = useToast()
+const sharedFiles = ref<File[]>([])
+const isSharedChoiceOpen = ref(false)
+const isProcessingShared = ref(false)
 
 const editingMemory = ref<any | null>(null) 
 
@@ -68,12 +71,61 @@ async function confirmReplaceDraft() {
   }
 }
 
+async function applySharedPhotos(replace: boolean) {
+  isProcessingShared.value = true
+
+  try {
+    const overflow = await addPhotos(sharedFiles.value, { replace, date: selectedDate.value })
+    await clearSharedPhotos()
+    sharedFiles.value = []
+    isSharedChoiceOpen.value = false
+    resumeDraft.value = true
+    isSlideoverOpen.value = true
+
+    if (overflow > 0) {
+      toast.add({ title: `Vzpomínka může mít nejvýše ${MAX_SHARED_PHOTOS} fotek, ${overflow} se nepřidalo.`, color: 'warning' })
+    }
+  } catch (error) {
+    console.error('[memory-page] Nepodařilo se uložit sdílené fotky', error)
+    toast.add({ title: 'Sdílené fotky se nepodařilo uložit. Zkuste je sdílet znovu.', color: 'error' })
+  } finally {
+    isProcessingShared.value = false
+  }
+}
+
+async function discardSharedPhotos() {
+  try {
+    await clearSharedPhotos()
+  } catch (error) {
+    console.error('[memory-page] Nepodařilo se smazat sdílené fotky', error)
+  }
+  sharedFiles.value = []
+  isSharedChoiceOpen.value = false
+}
+
 onMounted(async () => {
   try {
     await refreshDraft()
   } catch (error) {
     console.error('[memory-page] Nepodařilo se načíst koncept', error)
     toast.add({ title: 'Rozepsanou vzpomínku se nepodařilo načíst.', color: 'error' })
+  }
+
+  try {
+    sharedFiles.value = await readSharedPhotos()
+  } catch (error) {
+    console.error('[memory-page] Nepodařilo se načíst sdílené fotky', error)
+    return
+  }
+
+  if (!sharedFiles.value.length) {
+    return
+  }
+
+  if (draft.value) {
+    isSharedChoiceOpen.value = true
+  } else {
+    await applySharedPhotos(false)
   }
 })
 
@@ -146,6 +198,23 @@ onMounted(async () => {
         <div class="flex w-full justify-end gap-2.5">
           <UButton label="Nová vzpomínka" color="neutral" variant="ghost" @click="startNewMemory" />
           <UButton label="Pokračovat" color="primary" @click="continueDraft" />
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isSharedChoiceOpen"
+      title="Sdílené fotky"
+      :description="`Sdílených fotek: ${sharedFiles.length}. Přidat je do rozepsané vzpomínky, nebo začít novou? Nová vzpomínka nahradí současný koncept.`"
+      :dismissible="false"
+      :close="false"
+      :ui="{ content: 'max-w-sm' }"
+    >
+      <template #footer>
+        <div class="flex w-full flex-col gap-2.5">
+          <UButton block label="Přidat do rozepsané vzpomínky" :loading="isProcessingShared" @click="applySharedPhotos(false)" />
+          <UButton block label="Zahodit koncept a začít novou" color="error" variant="soft" :disabled="isProcessingShared" @click="applySharedPhotos(true)" />
+          <UButton block label="Zahodit sdílené fotky" color="neutral" variant="ghost" :disabled="isProcessingShared" @click="discardSharedPhotos" />
         </div>
       </template>
     </UModal>

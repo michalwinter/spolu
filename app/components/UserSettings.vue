@@ -3,8 +3,8 @@ import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
 const { logout: signOut } = useOfflineSession()
 const toast = useToast()
 
-const { public: { appVersion } } = useRuntimeConfig()
-const versionLabel = computed(() => `v${appVersion}`)
+const { public: { appVersion, appBuild } } = useRuntimeConfig()
+const versionLabel = computed(() => appBuild ? `v${appVersion} (${appBuild})` : `v${appVersion}`)
 
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobile = breakpoints.smaller('sm')

@@ -4,6 +4,7 @@ import {
   readMemoryDraft,
   type MemoryDraft
 } from './memoryOfflineStore'
+import { MAX_SHARED_PHOTOS } from './sharedPhotos'
 
 export function useMemoryDraft() {
   const { user } = useUserSession()
@@ -47,6 +48,35 @@ export function useMemoryDraft() {
     return storedDraft
   }
 
+  /**
+   * Puts photos into the draft: appended to the current one, or into a fresh draft when
+   * `replace` is set or none exists. Returns how many photos did not fit into the limit.
+   */
+  async function addPhotos(files: File[], options: { replace?: boolean, date?: Date | null } = {}) {
+    const current = options.replace ? null : (draft.value ?? await refreshDraft())
+    const existingPhotos = current?.photos ?? []
+    const accepted = files.slice(0, Math.max(0, MAX_SHARED_PHOTOS - existingPhotos.length))
+    const photos = [
+      ...existingPhotos,
+      ...accepted.map(file => ({ name: file.name, type: file.type, lastModified: file.lastModified, blob: file as Blob }))
+    ]
+
+    if (current) {
+      await saveDraft({ ...current, photos })
+    } else {
+      const base = options.date ? new Date(options.date) : new Date()
+      await saveDraft({
+        dateISO: new Date(base.getFullYear(), base.getMonth(), base.getDate()).toISOString(),
+        text: '',
+        location: '',
+        tags: [],
+        photos
+      })
+    }
+
+    return files.length - accepted.length
+  }
+
   async function removeDraft() {
     const userId = user.value?.id
     if (!import.meta.client || !userId) {
@@ -60,5 +90,5 @@ export function useMemoryDraft() {
     }
   }
 
-  return { draft, refreshDraft, saveDraft, removeDraft }
+  return { draft, refreshDraft, saveDraft, addPhotos, removeDraft }
 }
